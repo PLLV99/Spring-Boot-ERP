@@ -1,0 +1,61 @@
+package com.app.my_project.entity;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+
+@Entity
+public class StoreEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String name;
+    private String address;
+    // private String phone;
+    // private String email;
+    private String remark;
+
+    // private String createdBy;
+    // private String updatedBy;
+    // private String createdAt;
+    // private String updatedAt;
+    // private boolean isActive;
+    // private String imageUrl;
+    // private String imageName;
+    // private String imageType;
+    // private String imageSize;
+    // private String imagePath;
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getRemark() {
+        return remark;
+    }
+
+    public void setRemark(String remark) {
+        this.remark = remark;
+    }
+
+}
