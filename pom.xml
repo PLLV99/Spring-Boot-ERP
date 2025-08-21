@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<!-- Parent project for Spring Boot dependencies -->
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>3.4.5</version>
+		<relativePath /> <!-- lookup parent from repository -->
+	</parent>
+	<!-- Project metadata -->
+	<groupId>com.app</groupId>
+	<artifactId>my-project</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>war</packaging> <!-- Packaging type: WAR for web applications -->
+	<name>my-project</name>
+	<description>Demo project for Spring Boot</description>
+	<url />
+	<!-- Licenses section -->
+	<licenses>
+		<license />
+	</licenses>
+	<!-- Developers section -->
+	<developers>
+		<developer />
+	</developers>
+	<!-- Source Control Management (SCM) -->
+	<scm>
+		<connection />
+		<developerConnection />
+		<tag />
+		<url />
+	</scm>
+	<!-- Properties -->
+	<properties>
+		<java.version>17</java.version> <!-- Java version used in the project -->
+	</properties>
+	<dependencies>
+		<!-- Spring Boot Starter Web for building web applications -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<!-- Spring Boot Starter Tomcat for running the application in a servlet container -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-tomcat</artifactId>
+			<scope>provided</scope> <!-- Provided scope for deployment -->
+		</dependency>
+		<!-- Spring Boot Starter Test for testing -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope> <!-- Test scope for unit testing -->
+		</dependency>
+		<!-- Spring Boot DevTools for hot reload during development -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<scope>runtime</scope> <!-- Runtime scope for development only -->
+			<optional>true</optional> <!-- Optional dependency -->
+		</dependency>
+		<!-- Java JWT library for handling JSON Web Tokens -->
+		<dependency>
+			<groupId>com.auth0</groupId>
+			<artifactId>java-jwt</artifactId>
+			<version>4.4.0</version>
+		</dependency>
+		<!-- Dotenv Java library for managing environment variables -->
+		<dependency>
+			<groupId>io.github.cdimascio</groupId>
+			<artifactId>dotenv-java</artifactId>
+			<version>3.0.0</version>
+		</dependency>
+
+		<!-- Dependency for Spring Data JPA, used for interacting with relational databases in a Spring application -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+
+		<!-- Dependency for PostgreSQL database driver, required for connecting to a PostgreSQL database at runtime -->
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+	</dependencies>
+	<!-- Build configuration -->
+	<build>
+		<plugins>
+			<!-- Spring Boot Maven Plugin for building and running the application -->
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
