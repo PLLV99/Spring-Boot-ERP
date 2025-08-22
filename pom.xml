@@ -14,7 +14,7 @@
 	<groupId>com.app</groupId>
 	<artifactId>my-project</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<packaging>war</packaging> <!-- Packaging type: WAR for web applications -->
+	<packaging>jar</packaging> <!-- Packaging type, can be jar or war -->
 	<name>my-project</name>
 	<description>Demo project for Spring Boot</description>
 	<url />
@@ -43,12 +43,6 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
-		<!-- Spring Boot Starter Tomcat for running the application in a servlet container -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-tomcat</artifactId>
-			<scope>provided</scope> <!-- Provided scope for deployment -->
-		</dependency>
 		<!-- Spring Boot Starter Test for testing -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -75,13 +69,15 @@
 			<version>3.0.0</version>
 		</dependency>
 
-		<!-- Dependency for Spring Data JPA, used for interacting with relational databases in a Spring application -->
+		<!-- Dependency for Spring Data JPA, used for interacting with relational databases in a
+		Spring application -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
 
-		<!-- Dependency for PostgreSQL database driver, required for connecting to a PostgreSQL database at runtime -->
+		<!-- Dependency for PostgreSQL database driver, required for connecting to a PostgreSQL
+		database at runtime -->
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
