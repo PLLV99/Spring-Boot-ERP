@@ -34,9 +34,15 @@ public class WebConfig implements WebMvcConfigurer {
     public static String getSecret() {
         if (secret == null) {
             Dotenv dotenv = Dotenv.configure()
-                    .directory(System.getProperty("user.dir") + "/my-project")
+                    .ignoreIfMissing()
                     .load();
             secret = dotenv.get("JWT_SECRET");
+            if (secret == null || secret.isBlank()) {
+                secret = System.getenv("JWT_SECRET");
+            }
+            if (secret == null || secret.isBlank()) {
+                throw new IllegalStateException("JWT_SECRET is not configured");
+            }
         }
         return secret;
     }

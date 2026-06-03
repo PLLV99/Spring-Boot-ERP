@@ -88,7 +88,7 @@ src/
     └── MyProjectApplicationTests.java
 
 Root files:
-.mvn/wrapper, .env, .gitattributes, .gitignore, application.properties,
+.mvn/wrapper, .env.example, .gitattributes, .gitignore, application.properties,
 mvnw, mvnw.cmd, pom.xml, README.md
 ```
 
@@ -105,9 +105,12 @@ mvnw, mvnw.cmd, pom.xml, README.md
 ```bash
 git clone https://github.com/PLLV99/Spring-Boot-ERP.git
 cd Spring-Boot-ERP
-mvn clean install
+cp .env.example .env
+# Fill in DB_URL, DB_USERNAME, DB_PASSWORD, JWT_SECRET in .env
 mvn spring-boot:run
 ```
+
+You can optionally run `mvn clean install` after creating `.env`.
 
 Default local URL: http://localhost:8080
 
