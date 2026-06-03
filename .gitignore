@@ -34,3 +34,8 @@ build/
 
 ### Ignore AWS key files ###
 *.pem
+
+### Environment files ###
+.env
+.env.*
+!.env.example
