@@ -5,7 +5,7 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import com.app.my_project.WebConfig;
-import com.app.my_project.annotation.RequireAuth;
+import com.app.my_project.annotation.Public;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.TokenExpiredException;
@@ -29,10 +29,16 @@ public class JwtInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        HandlerMethod handlerMethod = (HandlerMethod) handler;
-        boolean hasRequireAuth = handlerMethod.hasMethodAnnotation(RequireAuth.class);
+        // Spring forwards failed requests here to build the error response;
+        // blocking it would turn every error into a confusing 401
+        if ("/error".equals(request.getRequestURI())) {
+            return true;
+        }
 
-        if (!hasRequireAuth) {
+        // Deny by default: every endpoint requires a valid token
+        // unless it is explicitly marked @Public (e.g. signin)
+        HandlerMethod handlerMethod = (HandlerMethod) handler;
+        if (handlerMethod.hasMethodAnnotation(Public.class)) {
             return true;
         }
 

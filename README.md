@@ -28,7 +28,7 @@ src/
 │   │   │   └── UserModel.java
 │   │   └── my_project/
 │   │       ├── annotation/
-│   │       │   └── RequireAuth.java
+│   │       │   └── Public.java
 │   │       ├── controller/
 │   │       │   ├── FormulaApiController.java
 │   │       │   ├── MaterialApiController.java
@@ -95,7 +95,7 @@ docker-compose.yml, mvnw, mvnw.cmd, pom.xml, README.md
 - Entities: Database mappings
 - Repositories: Data access layer
 - Services: Business logic
-- Security: `RequireAuth` + `JwtInterceptor`
+- Security: deny-by-default `JwtInterceptor` — every endpoint requires a JWT unless marked `@Public` (only signin)
 - Config: `WebConfig` + `application.properties`
 
 ## Getting Started

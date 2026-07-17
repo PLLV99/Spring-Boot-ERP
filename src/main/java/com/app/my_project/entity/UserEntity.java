@@ -1,5 +1,7 @@
 package com.app.my_project.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -20,6 +22,11 @@ public class UserEntity {
     @Column(nullable = false, unique = true)
     private String username;
     private String email;
+
+    // WRITE_ONLY: accepted from request bodies (create/edit forms) but never
+    // serialized into responses - the BCrypt hash must never reach a client,
+    // including through relations like BillSaleEntity.user
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
     private String role;
 

@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.app.my_project.annotation.RequireAuth;
+import com.app.my_project.annotation.Public;
 import com.app.my_project.entity.UserEntity;
 import com.app.my_project.repository.UserRepository;
 import com.auth0.jwt.JWT;
@@ -38,11 +38,8 @@ public class UserApiController {
 
     // Get all users (GET /api/users)
     @GetMapping
-    @RequireAuth
     public List<UserEntity> getAllUsers() {
-        List<UserEntity> users = userRepository.findAll();
-        users.forEach(u -> u.setPassword(null)); // never send hashes back to the client
-        return users;
+        return userRepository.findAll();
     }
 
     // Get JWT Secret (loaded from .env or environment via WebConfig)
@@ -57,6 +54,9 @@ public class UserApiController {
 
     // Admin Signin: Check username, password and create JWT Token (POST
     // /api/users/admin-signin)
+    // @Public: the only endpoint reachable without a token - you cannot
+    // log in if login itself requires being logged in
+    @Public
     @PostMapping("/admin-signin")
     public Object adminSigin(@RequestBody UserEntity user) {
         try {
@@ -87,7 +87,6 @@ public class UserApiController {
 
     // Get admin info from JWT token (GET /api/users/admin-info)
     @GetMapping("/admin-info")
-    @RequireAuth
     public Object adminInfo(@RequestHeader("Authorization") String token) {
         String tokenWithoutBearer = token.replace("Bearer ", "").trim();
         Long userId = Long.valueOf(JWT.decode(tokenWithoutBearer).getSubject());
@@ -145,7 +144,6 @@ public class UserApiController {
                 userToUpdate.setPassword(passwordEncoder.encode(user.getPassword()));
             }
             userRepository.save(userToUpdate);
-            userToUpdate.setPassword(null); // never send hashes back to the client
             return userToUpdate;
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("update user error: " + e.getMessage());
@@ -172,7 +170,6 @@ public class UserApiController {
             }
             userToUpdate.setRole(user.getRole());
             userRepository.save(userToUpdate);
-            userToUpdate.setPassword(null); // never send hashes back to the client
             return userToUpdate;
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("update user error: " + e.getMessage());
@@ -194,7 +191,6 @@ public class UserApiController {
             }
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             userRepository.save(user);
-            user.setPassword(null); // never send hashes back to the client
             return user;
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Authentication error " + e.getMessage());
@@ -234,7 +230,6 @@ public class UserApiController {
                 userToUpdate.setPassword(passwordEncoder.encode(user.getPassword()));
             }
             userRepository.save(userToUpdate);
-            userToUpdate.setPassword(null); // never send hashes back to the client
             return userToUpdate;
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("update user error: " + e.getMessage());
