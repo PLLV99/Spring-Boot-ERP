@@ -3,6 +3,7 @@ package com.app.my_project.controller;
 import java.util.Date;
 import java.util.List;
 
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,6 +28,8 @@ public class UserApiController {
     // Repository for accessing user data from the database
     private final UserRepository userRepository;
     private static final long EXPIRATION_TIME = 60 * 60 * 1000 * 24 * 7; // JWT Token expiration time (1 week)
+    // BCrypt hashes passwords with a per-password salt; plaintext is never stored
+    private static final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     // Constructor for injecting UserRepository
     public UserApiController(UserRepository userRepository) {
@@ -38,54 +41,6 @@ public class UserApiController {
     @RequireAuth
     public List<UserEntity> getAllUsers() {
         return userRepository.findAll();
-    }
-
-    // Create a new user (POST /api/users)
-    @PostMapping
-    public UserEntity createUser(@RequestBody UserEntity user) {
-        return userRepository.save(user);
-    }
-
-    // Get user by id (GET /api/users/{id})
-    @GetMapping("/{id}")
-    public UserEntity getUserById(@PathVariable Long id) {
-        return userRepository.findById(id).orElse(null);
-    }
-
-    // Update user details (PUT /api/users/{id})
-    @PutMapping("/{id}")
-    public UserEntity updateUser(@PathVariable Long id, @RequestBody UserEntity user) {
-        UserEntity userToUpdate = userRepository.findById(id).orElse(null);
-
-        if (userToUpdate == null) {
-            throw new IllegalArgumentException("User not found");
-        }
-
-        userToUpdate.setUsername(user.getUsername());
-        userToUpdate.setEmail(user.getEmail());
-
-        return userRepository.save(userToUpdate);
-    }
-
-    // Delete user by id (DELETE /api/users/{id})
-    @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable Long id) {
-        userRepository.deleteById(id);
-    }
-
-    // Signin: Check username and email (POST /api/users/signin)
-    @PostMapping("/signin")
-    public UserEntity signin(@RequestBody UserEntity user) {
-        String username = user.getUsername();
-        String email = user.getEmail();
-
-        UserEntity userToSignin = userRepository.findByUsernameAndEmail(username, email);
-
-        if (userToSignin == null) {
-            throw new IllegalArgumentException("User not found");
-        }
-
-        return userToSignin;
     }
 
     // Get JWT Secret (loaded from .env or environment via WebConfig)
@@ -106,7 +61,12 @@ public class UserApiController {
             String u = user.getUsername();
             String p = user.getPassword();
 
-            UserEntity userForCreateToken = userRepository.findByUsernameAndPassword(u, p);
+            // Look up by username only, then compare the BCrypt hash —
+            // never query the database by plaintext password
+            UserEntity userForCreateToken = userRepository.findByUsername(u);
+            if (userForCreateToken == null || !passwordEncoder.matches(p, userForCreateToken.getPassword())) {
+                throw new IllegalArgumentException("Invalid username or password");
+            }
 
             String token = JWT.create()
                     .withSubject(String.valueOf(userForCreateToken.getId())) // subject = user id
@@ -180,7 +140,7 @@ public class UserApiController {
             userToUpdate.setUsername(user.getUsername());
             userToUpdate.setEmail(user.getEmail());
             if (user.getPassword() != null && !user.getPassword().isEmpty()) {
-                userToUpdate.setPassword(user.getPassword());
+                userToUpdate.setPassword(passwordEncoder.encode(user.getPassword()));
             }
             userRepository.save(userToUpdate);
             return userToUpdate;
@@ -205,7 +165,7 @@ public class UserApiController {
             userToUpdate.setUsername(user.getUsername());
             userToUpdate.setEmail(user.getEmail());
             if (user.getPassword() != null && !user.getPassword().isEmpty()) {
-                userToUpdate.setPassword(user.getPassword());
+                userToUpdate.setPassword(passwordEncoder.encode(user.getPassword()));
             }
             userToUpdate.setRole(user.getRole());
             userRepository.save(userToUpdate);
@@ -225,6 +185,7 @@ public class UserApiController {
             if (!isAdmin(token)) {
                 throw new IllegalArgumentException("You are not admin");
             }
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
             userRepository.save(user);
             return user;
         } catch (IllegalArgumentException e) {
@@ -262,7 +223,7 @@ public class UserApiController {
             userToUpdate.setUsername(user.getUsername());
             userToUpdate.setEmail(user.getEmail());
             if (user.getPassword() != null && !user.getPassword().isEmpty()) {
-                userToUpdate.setPassword(user.getPassword());
+                userToUpdate.setPassword(passwordEncoder.encode(user.getPassword()));
             }
             userRepository.save(userToUpdate);
             return userToUpdate;

@@ -9,10 +9,8 @@ import com.app.my_project.entity.UserEntity;
 // The UserEntity class is mapped to a database table, and this repository provides methods to perform CRUD operations on it
 public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
-    // Custom query method to find a user by their username and email
-    // This method uses Spring Data JPA's query derivation mechanism to generate SQL
-    // queries automatically
-    UserEntity findByUsernameAndEmail(String username, String email);
-
-    UserEntity findByUsernameAndPassword(String username, String password);
+    // Custom query method using Spring Data JPA's query derivation mechanism.
+    // Passwords are BCrypt-hashed, so lookups are by username only and the
+    // hash comparison happens in the controller via BCryptPasswordEncoder.
+    UserEntity findByUsername(String username);
 }
