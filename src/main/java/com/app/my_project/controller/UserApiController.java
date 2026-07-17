@@ -40,7 +40,9 @@ public class UserApiController {
     @GetMapping
     @RequireAuth
     public List<UserEntity> getAllUsers() {
-        return userRepository.findAll();
+        List<UserEntity> users = userRepository.findAll();
+        users.forEach(u -> u.setPassword(null)); // never send hashes back to the client
+        return users;
     }
 
     // Get JWT Secret (loaded from .env or environment via WebConfig)
@@ -143,6 +145,7 @@ public class UserApiController {
                 userToUpdate.setPassword(passwordEncoder.encode(user.getPassword()));
             }
             userRepository.save(userToUpdate);
+            userToUpdate.setPassword(null); // never send hashes back to the client
             return userToUpdate;
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("update user error: " + e.getMessage());
@@ -169,6 +172,7 @@ public class UserApiController {
             }
             userToUpdate.setRole(user.getRole());
             userRepository.save(userToUpdate);
+            userToUpdate.setPassword(null); // never send hashes back to the client
             return userToUpdate;
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("update user error: " + e.getMessage());
@@ -185,8 +189,12 @@ public class UserApiController {
             if (!isAdmin(token)) {
                 throw new IllegalArgumentException("You are not admin");
             }
+            if (userRepository.findByUsername(user.getUsername()) != null) {
+                throw new IllegalArgumentException("Username already exists");
+            }
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             userRepository.save(user);
+            user.setPassword(null); // never send hashes back to the client
             return user;
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Authentication error " + e.getMessage());
@@ -226,6 +234,7 @@ public class UserApiController {
                 userToUpdate.setPassword(passwordEncoder.encode(user.getPassword()));
             }
             userRepository.save(userToUpdate);
+            userToUpdate.setPassword(null); // never send hashes back to the client
             return userToUpdate;
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("update user error: " + e.getMessage());

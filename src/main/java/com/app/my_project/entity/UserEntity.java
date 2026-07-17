@@ -1,5 +1,6 @@
 package com.app.my_project.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -14,6 +15,9 @@ public class UserEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Unique at the database level: signin looks up by username alone,
+    // so duplicates would break authentication
+    @Column(nullable = false, unique = true)
     private String username;
     private String email;
     private String password;
