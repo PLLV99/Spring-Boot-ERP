@@ -19,7 +19,6 @@ import com.app.my_project.repository.UserRepository;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 
-import io.github.cdimascio.dotenv.Dotenv;
 
 // UserApiController: REST API controller for managing user data
 @RestController
@@ -89,13 +88,9 @@ public class UserApiController {
         return userToSignin;
     }
 
-    // Get JWT Secret from .env file in the my-project folder (used for token
-    // creation)
+    // Get JWT Secret (loaded from .env or environment via WebConfig)
     private String getSecret() {
-        Dotenv dotenv = Dotenv.configure()
-                .directory(System.getProperty("user.dir") + "/my-project")
-                .load();
-        return dotenv.get("JWT_SECRET");
+        return com.app.my_project.WebConfig.getSecret();
     }
 
     // Create JWT Algorithm with secret

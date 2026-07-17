@@ -16,7 +16,6 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 
-import io.github.cdimascio.dotenv.Dotenv;
 
 @RestController
 @RequestMapping("/jwt") // Base URL for JWT-related endpoints
@@ -24,12 +23,9 @@ public class UserController {
     // Token expiration time set to 24 hours
     private static final long EXPIRATION_TIME = 60 * 60 * 1000 * 24; // 1 day
 
-    // Method to retrieve the JWT secret from the .env file
+    // Method to retrieve the JWT secret (loaded from .env or environment via WebConfig)
     public String getSecret() {
-        Dotenv dotenv = Dotenv.configure()
-                .directory(System.getProperty("user.dir") + "/my-project")
-                .load();
-        return dotenv.get("JWT_SECRET");
+        return WebConfig.getSecret();
     }
 
     // Method to get the HMAC256 algorithm instance with the secret

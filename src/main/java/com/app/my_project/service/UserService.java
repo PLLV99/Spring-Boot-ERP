@@ -5,15 +5,12 @@ import org.springframework.stereotype.Service;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 
-import io.github.cdimascio.dotenv.Dotenv;
+import com.app.my_project.WebConfig;
 
 @Service
 public class UserService {
     private String getSecret() {
-        Dotenv dotenv = Dotenv.configure()
-                .directory(System.getProperty("user.dir") + "/my-project")
-                .load();
-        return dotenv.get("JWT_SECRET");
+        return WebConfig.getSecret();
     }
 
     private Algorithm getAlgorithm() {

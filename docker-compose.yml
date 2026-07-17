@@ -1,0 +1,23 @@
+services:
+  db:
+    image: postgres:17
+    container_name: erp-postgres
+    restart: unless-stopped
+    ports:
+      # Host port 5435 to avoid the native Postgres on 5432 and other projects on 5433
+      - "5435:5432"
+    environment:
+      POSTGRES_DB: erp
+      # Values come from the local .env file (gitignored)
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - erp_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d erp"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  erp_pgdata:
