@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.data.domain.Sort;
+
+import com.app.my_project.annotation.RequireRole;
 import com.app.my_project.entity.ProductionEntity;
 import com.app.my_project.repository.ProductionRepository;
 
@@ -27,7 +30,10 @@ public class ProductionApiController {
     // CRUD operations for ProductionEntity
     @GetMapping
     public List<ProductionEntity> getAllProductions() {
-        return productionRepository.findAll();
+        // Sort explicitly: findAll() has no ORDER BY, so PostgreSQL returns rows in
+        // physical scan order - and an UPDATE rewrites the row at the end of the heap,
+        // which makes edited products jump around in the list
+        return productionRepository.findAll(Sort.by("id"));
     }
 
     @GetMapping("/{id}")
@@ -60,6 +66,9 @@ public class ProductionApiController {
         productionRepository.deleteById(id);
     }
 
+    // Pricing lives on the admin-only Accounting screen; the rest of this
+    // controller stays open to employees, who work the Production screen
+    @RequireRole("admin")
     @PutMapping("/updatePrice/{id}")
     public void updatePrice(
             @PathVariable Long id,

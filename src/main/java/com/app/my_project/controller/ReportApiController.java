@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.app.my_project.annotation.RequireRole;
 import com.app.my_project.entity.BillSaleDetailEntity;
 import com.app.my_project.entity.BillSaleEntity;
 import com.app.my_project.repository.BillSaleDetailRepository;
@@ -21,8 +23,12 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
 
+// Dashboard, Invoice and Reports are admin-only screens in the sidebar, so the
+// whole controller is admin-only: revenue figures and invoice cancellation must
+// not be reachable by a signed-in employee.
 @RestController
 @RequestMapping("/api/report")
+@RequireRole("admin")
 public class ReportApiController {
 
     @Autowired
@@ -73,7 +79,8 @@ public class ReportApiController {
 
     @GetMapping("/bill-sales")
     public List<BillSaleEntity> billSalePerMonth() {
-        return billSaleRepository.findAll();
+        // Newest invoice first - the one just created is the one the cashier wants to see
+        return billSaleRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
     }
 
     @GetMapping("/bill-sale-detail/{billSaleId}")
@@ -128,9 +135,11 @@ public class ReportApiController {
             int totalProduct = productionRepository.findAll().size();
 
             // Total production loss quantity
+            // COALESCE: SUM over an empty table returns NULL, which breaks clients
+            // expecting a number (the other dashboard queries already guard this)
             sql = """
                     SELECT
-                        SUM(production_loss_entity.qty) AS sum_qty
+                        COALESCE(SUM(production_loss_entity.qty), 0) AS sum_qty
                     FROM production_loss_entity
                     """;
             query = entityManager.createNativeQuery(sql);

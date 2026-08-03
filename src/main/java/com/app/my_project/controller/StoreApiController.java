@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,7 +31,7 @@ public class StoreApiController {
 
     @GetMapping
     public List<StoreEntity> getStore() {
-        return storeRepository.findAll();
+        return storeRepository.findAll(Sort.by("id"));
     }
 
     @PostMapping
@@ -56,7 +57,7 @@ public class StoreApiController {
     public Map<String, Object> getDataForImport(@PathVariable Long id) {
         List<Object[]> rows = storeRepository.findProductionSummary(id);
         if (rows.isEmpty()) {
-            throw new RuntimeException("No production summary found for id " + id);
+            throw new RuntimeException("Production summary not found for id " + id);
         }
         Object[] row = rows.get(0);
         Map<String, Object> result = new LinkedHashMap<>();

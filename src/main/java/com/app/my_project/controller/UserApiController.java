@@ -3,6 +3,8 @@ package com.app.my_project.controller;
 import java.util.Date;
 import java.util.List;
 
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,8 +15,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.app.my_project.annotation.Public;
+import com.app.my_project.annotation.RequireRole;
 import com.app.my_project.entity.UserEntity;
 import com.app.my_project.repository.UserRepository;
 import com.auth0.jwt.JWT;
@@ -36,10 +40,11 @@ public class UserApiController {
         this.userRepository = userRepository;
     }
 
-    // Get all users (GET /api/users)
+    // Get all users (GET /api/users) - the staff list is admin-only
+    @RequireRole("admin")
     @GetMapping
     public List<UserEntity> getAllUsers() {
-        return userRepository.findAll();
+        return userRepository.findAll(Sort.by("id"));
     }
 
     // Get JWT Secret (loaded from .env or environment via WebConfig)
@@ -59,30 +64,28 @@ public class UserApiController {
     @Public
     @PostMapping("/admin-signin")
     public Object adminSigin(@RequestBody UserEntity user) {
-        try {
-            String u = user.getUsername();
-            String p = user.getPassword();
+        String u = user.getUsername();
+        String p = user.getPassword();
 
-            // Look up by username only, then compare the BCrypt hash —
-            // never query the database by plaintext password
-            UserEntity userForCreateToken = userRepository.findByUsername(u);
-            if (userForCreateToken == null || !passwordEncoder.matches(p, userForCreateToken.getPassword())) {
-                throw new IllegalArgumentException("Invalid username or password");
-            }
-
-            String token = JWT.create()
-                    .withSubject(String.valueOf(userForCreateToken.getId())) // subject = user id
-                    .withExpiresAt(new Date(System.currentTimeMillis() + EXPIRATION_TIME)) // วันหมดอายุ
-                    .withIssuedAt(new Date()) // วันออก token
-                    .withClaim("role", userForCreateToken.getRole())
-                    .sign(getAlgorithm()); // เซ็น token
-            String role = userForCreateToken.getRole();
-            record UserResponse(String token, String role) {
-            }
-            return new UserResponse(token, role);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Error creating token");
+        // Look up by username only, then compare the BCrypt hash —
+        // never query the database by plaintext password
+        UserEntity userForCreateToken = userRepository.findByUsername(u);
+        // 401, and the same message either way: telling the caller which half was
+        // wrong would let them enumerate valid usernames
+        if (userForCreateToken == null || !passwordEncoder.matches(p, userForCreateToken.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password");
         }
+
+        String token = JWT.create()
+                .withSubject(String.valueOf(userForCreateToken.getId())) // subject = user id
+                .withExpiresAt(new Date(System.currentTimeMillis() + EXPIRATION_TIME)) // วันหมดอายุ
+                .withIssuedAt(new Date()) // วันออก token
+                .withClaim("role", userForCreateToken.getRole())
+                .sign(getAlgorithm()); // เซ็น token
+        String role = userForCreateToken.getRole();
+        record UserResponse(String token, String role) {
+        }
+        return new UserResponse(token, role);
     }
 
     // Get admin info from JWT token (GET /api/users/admin-info)
@@ -114,27 +117,17 @@ public class UserApiController {
                         .getSubject());
     }
 
-    // (Check if token has admin role)
-    private boolean isAdmin(String token) {
-        String tokenWithoutBearer = token.replace("Bearer ", "");
-        String role = JWT.require(getAlgorithm())
-                .build()
-                .verify(tokenWithoutBearer)
-                .getClaim("role").asString();
-        return "admin".equals(role);
-    }
-
     // Admin can edit any user (PUT /api/users/admin-edit-profile/{id})
+    // The role check lives in @RequireRole, read by JwtInterceptor: one place
+    // instead of an isAdmin() call copy-pasted into every admin method, and a
+    // rejection now returns 403 rather than a 500 from a thrown exception.
+    @RequireRole("admin")
     @PutMapping("/admin-edit-profile/{id}")
     public UserEntity adminEditProfile(
             @RequestHeader("Authorization") String token,
             @PathVariable Long id,
             @RequestBody UserEntity user) {
         try {
-            // (Check token for real admin role)
-            if (!isAdmin(token)) {
-                throw new IllegalArgumentException("You are not admin");
-            }
             UserEntity userToUpdate = userRepository.findById(id).orElse(null);
             if (userToUpdate == null)
                 throw new IllegalArgumentException("User not found");
@@ -150,16 +143,13 @@ public class UserApiController {
         }
     }
 
+    @RequireRole("admin")
     @PutMapping("/admin-update-profile/{id}")
     public UserEntity adminUpdateProfile(
             @RequestHeader("Authorization") String token,
             @PathVariable Long id,
             @RequestBody UserEntity user) {
         try {
-            // (Check token for real admin role)
-            if (!isAdmin(token)) {
-                throw new IllegalArgumentException("You are not admin");
-            }
             UserEntity userToUpdate = userRepository.findById(id).orElse(null);
             if (userToUpdate == null)
                 throw new IllegalArgumentException("User not found");
@@ -177,41 +167,29 @@ public class UserApiController {
     }
 
     // Admin create new user (POST /api/users/admin-create)
+    @RequireRole("admin")
     @PostMapping("/admin-create")
     public UserEntity adminCreate(
             @RequestHeader("Authorization") String token,
             @RequestBody UserEntity user) {
-        try {
-            // ตรวจสอบ token ว่าเป็น admin จริง (Check token for real admin role)
-            if (!isAdmin(token)) {
-                throw new IllegalArgumentException("You are not admin");
-            }
-            if (userRepository.findByUsername(user.getUsername()) != null) {
-                throw new IllegalArgumentException("Username already exists");
-            }
-            user.setPassword(passwordEncoder.encode(user.getPassword()));
-            userRepository.save(user);
-            return user;
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Authentication error " + e.getMessage());
+        // IllegalStateException -> 409 Conflict: the request was well formed, it just
+        // collides with a username that is already taken
+        if (userRepository.findByUsername(user.getUsername()) != null) {
+            throw new IllegalStateException("Username '" + user.getUsername() + "' already exists");
         }
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        userRepository.save(user);
+        return user;
     }
 
     // Admin delete user (DELETE /api/users/admin-delete/{id})
+    @RequireRole("admin")
     @DeleteMapping("/admin-delete/{id}")
     public void adminDelete(@RequestHeader("Authorization") String token, @PathVariable Long id) {
-        try {
-            // ตรวจสอบ token ว่าเป็น admin จริง (Check token for real admin role)
-            if (!isAdmin(token)) {
-                throw new IllegalArgumentException("You are not admin");
-            }
-            UserEntity userToDelete = userRepository.findById(id).orElse(null);
-            if (userToDelete == null)
-                throw new IllegalArgumentException("User not found");
-            userRepository.deleteById(id);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Authentication error " + e.getMessage());
-        }
+        UserEntity userToDelete = userRepository.findById(id).orElse(null);
+        if (userToDelete == null)
+            throw new IllegalArgumentException("User not found");
+        userRepository.deleteById(id);
     }
 
     // User or admin edit their own profile (PUT /api/users/edit-profile)
