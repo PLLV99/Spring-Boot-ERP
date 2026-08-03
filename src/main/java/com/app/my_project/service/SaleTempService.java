@@ -37,7 +37,15 @@ public class SaleTempService {
         ProductionEntity productionEntity = productionRepository.findById(productionId)
                 .orElseThrow(() -> new RuntimeException("Production not found with ID: " + productionId));
 
-        // 2. Find existing SaleTempEntity for this productionId and userId
+        // 2. A product with no price cannot be sold. SaleTempEntity.price is a
+        // primitive double, so an unpriced product would fail with a raw
+        // NullPointerException instead of telling the cashier what is wrong.
+        if (productionEntity.getPrice() == null) {
+            throw new IllegalStateException(
+                    "Product '" + productionEntity.getName() + "' has no price yet - set it on the Accounting page first");
+        }
+
+        // 3. Find existing SaleTempEntity for this productionId and userId
         SaleTempEntity oldSaleTemp = saleTempRepository.findByProductionIdAndUserId(productionId, userId);
 
         // 3. If it exists, update the quantity (qty)

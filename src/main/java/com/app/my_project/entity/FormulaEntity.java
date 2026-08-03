@@ -1,5 +1,8 @@
 package com.app.my_project.entity;
 
+import java.math.BigDecimal;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -13,7 +16,15 @@ public class FormulaEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private int qty;
+
+    // BigDecimal, not int: a recipe legitimately needs 0.3 kg of a material, and an
+    // int column silently truncated that to 0 - the request still answered 200 while
+    // the saved recipe said "use none of this". NUMERIC(12,4) rather than double so
+    // quantities add up exactly when requirements are rolled up across a batch.
+    @Column(precision = 12, scale = 4)
+    private BigDecimal qty;
+
+    // Unit of measure, carried over from the material this line refers to
     private String unit;
 
     @ManyToOne
@@ -32,11 +43,11 @@ public class FormulaEntity {
         this.id = id;
     }
 
-    public int getQty() {
+    public BigDecimal getQty() {
         return qty;
     }
 
-    public void setQty(int qty) {
+    public void setQty(BigDecimal qty) {
         this.qty = qty;
     }
 

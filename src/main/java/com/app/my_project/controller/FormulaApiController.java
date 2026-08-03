@@ -32,13 +32,24 @@ public class FormulaApiController {
 
     @PostMapping
     public FormulaEntity createFormula(@RequestBody FormulaEntity formulaEntity) {
+        requirePositiveQty(formulaEntity);
         return formulaRepository.save(formulaEntity);
+    }
+
+    // A recipe line with no quantity, or a negative one, is meaningless - reject it
+    // here rather than storing it and having the shortage calculation go wrong later
+    private void requirePositiveQty(FormulaEntity formulaEntity) {
+        if (formulaEntity.getQty() == null || formulaEntity.getQty().signum() <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than 0");
+        }
     }
 
     @PutMapping("/{id}")
     public FormulaEntity updateFormula(
             @PathVariable Long id,
             @RequestBody FormulaEntity formulaEntity) {
+        requirePositiveQty(formulaEntity);
+
         FormulaEntity formula = formulaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Formula not found"));
 

@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
+import org.springframework.data.domain.Sort;
+
 import com.app.my_project.entity.TransferStockEntity;
 import com.app.my_project.repository.TransferStockRepository;
 
@@ -23,7 +25,7 @@ public class TransferStockApiController {
 
     @GetMapping
     public List<TransferStockEntity> list() {
-        return transferStockRepository.findAll();
+        return transferStockRepository.findAll(Sort.by("id"));
     }
 
     @PostMapping

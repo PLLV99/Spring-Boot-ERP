@@ -2,6 +2,8 @@ package com.app.my_project.entity;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -20,7 +22,14 @@ public class ProductionLossEntity {
     private ProductionEntity production;
     private String remark;
     private Double qty;
-    private LocalDateTime createdAt;
+
+    // When the scrap actually happened - chosen by the operator, can be back-dated
+    private LocalDateTime productionDate;
+
+    // When the row was entered. Server-set, so a back-dated entry still shows when it
+    // was really keyed in.
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private LocalDateTime recordedAt;
 
     public Long getId() {
         return id;
@@ -54,12 +63,20 @@ public class ProductionLossEntity {
         this.qty = qty;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
+    public LocalDateTime getProductionDate() {
+        return productionDate;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
+    public void setProductionDate(LocalDateTime productionDate) {
+        this.productionDate = productionDate;
+    }
+
+    public LocalDateTime getRecordedAt() {
+        return recordedAt;
+    }
+
+    public void setRecordedAt(LocalDateTime recordedAt) {
+        this.recordedAt = recordedAt;
     }
 
 }

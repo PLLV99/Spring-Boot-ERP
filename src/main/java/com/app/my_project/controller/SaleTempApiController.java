@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -109,6 +110,10 @@ public class SaleTempApiController {
      * Complete the sale: create BillSale and BillSaleDetail records, then clear the
      * temp cart.
      */
+    // @Transactional: the bill header, every line item and the cart cleanup must
+    // land together - a failure halfway through would leave a bill with missing
+    // line items, which is financial data that cannot be reconstructed
+    @Transactional
     @PostMapping("/endSale")
     public void endSale(
             @RequestHeader("Authorization") String token,
@@ -122,17 +127,30 @@ public class SaleTempApiController {
         UserEntity userEntity = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("user not found"));
 
+        List<SaleTempEntity> saleTemps = saleTempRepository.findAllByUserIdOrderByIdDesc(userId);
+
+        if (saleTemps.isEmpty()) {
+            throw new IllegalStateException("Cannot close a sale with an empty cart");
+        }
+
+        // The total is derived from the cart, never taken from the request body:
+        // a client that posts the wrong total would otherwise save a bill whose
+        // header disagrees with its own line items, and revenue reports sum the
+        // line items rather than this field.
+        double total = 0;
+        for (SaleTempEntity saleTemp : saleTemps) {
+            total += saleTemp.getPrice() * saleTemp.getQty();
+        }
+
         BillSaleEntity billSaleEntity = new BillSaleEntity();
         billSaleEntity.setInputMoney(billSale.getInputMoney());
         billSaleEntity.setDiscount(billSale.getDiscount());
-        billSaleEntity.setTotal(billSale.getTotal());
+        billSaleEntity.setTotal(total);
         billSaleEntity.setStatus("paid");
         billSaleEntity.setCreatedAt(LocalDate.now());
         billSaleEntity.setUser(userEntity);
 
         billSaleRepository.save(billSaleEntity);
-
-        List<SaleTempEntity> saleTemps = saleTempRepository.findAllByUserIdOrderByIdDesc(userId);
 
         for (SaleTempEntity saleTemp : saleTemps) {
             BillSaleDetailEntity billSaleDetailEntity = new BillSaleDetailEntity();
